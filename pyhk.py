@@ -55,11 +55,11 @@ class pyhk:
     """Hotkey class extending pyhook"""
 
     def __init__(self):
-        #initiate internal hotkey list
+        # initiate internal hotkey list
         self.KeyDownID = []
         self.KeyDown = []
 
-        #initiate user hotkey list
+        # initiate user hotkey list
         self.UserHKF = []
         self.UserHKFUp = []
         self.HKFIDDict = {}
@@ -106,7 +106,7 @@ class pyhk:
         """End pyhk to check for hotkeys"""
         ctypes.windll.user32.PostQuitMessage(0)
 
-    #--------------------------------------------------------
+    # --------------------------------------------------------
 
     def isIDHotkey(self, hotkey):
         """Test if hotkey is coded in IDs"""
@@ -135,7 +135,7 @@ class pyhk:
         hotkeyVariationList = []
         hotkeyList = []
 
-        #convert everyting into ID,MID,MEID
+        # convert everyting into ID,MID,MEID
         if self.isIDHotkey(hotkey):
             IDHotkey = hotkey
         else:
@@ -243,7 +243,7 @@ class pyhk:
         self.EndHotkey = hotkey
         self.addHotkey(hotkey, self.end)
 
-    #--------------------------------------------------------
+    # --------------------------------------------------------
     #ID functions for HKFID
     def getNewHKFID(self):
         try:
@@ -251,7 +251,7 @@ class pyhk:
         except:
             return 1
 
-        #--------------------------------------------------------
+            #--------------------------------------------------------
 
     def isHotkey(self, hotkey):
         """Check if hotkey is pressed down
@@ -277,6 +277,7 @@ class pyhk:
         else:
             eventID = self.mouseDown_eventMessage2MID[event.Message]
 
+        #print(self.ID2Key.get(eventID))
         #make sure key only gets presse once
         if not (eventID in self.KeyDownID):
 
@@ -524,7 +525,7 @@ class pyhk:
         return LTempID2Key
 
 
-#permutation functions needed for merged hotkeys
+# permutation functions needed for merged hotkeys
 def UniquePermutation2(l1, l2):
     """"Return UP of two lists"""
     ltemp = []
@@ -555,7 +556,7 @@ def UniquePermutation(li):
     return lcurrent
 
 
-#class for thread
+# class for thread
 class ExecFunThread:
     def __init__(self, fun):
         self.fun = fun

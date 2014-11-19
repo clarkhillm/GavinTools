@@ -1,8 +1,11 @@
 import sip
 
+
 sip.setapi('QVariant', 2)
 sip.setapi('QString', 2)
 
+from PyQt4.QtCore import Qt
+from PyQt4.QtGui import QBitmap, QPainter
 from PyQt4 import QtGui, QtCore
 
 import pyhk
@@ -12,14 +15,23 @@ class CommandDialog(QtGui.QDialog):
     def __init__(self):
         super(CommandDialog, self).__init__()
 
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
         self.textEdit = QtGui.QLineEdit()
-        self.textEdit.setMinimumWidth(500)
-
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.textEdit)
-        self.setLayout(layout)
+        # self.setLayout(layout)
+        print self.height()
+        self.bmap = QBitmap(self.size())
+        self.p = QPainter(self.bmap)
+        self.p.fillRect(self.rect(), Qt.white)
+        self.p.setBrush(Qt.black)
+        self.p.drawRoundedRect(0, 0, self.width() - 1, self.height()-200, 10, 10)
+        self.setMask(self.bmap)
 
-        self.setWindowFlags(QtCore.Qt.Popup)
+        # self.textEdit.setMinimumWidth(500)
+        self.textEdit.setStyleSheet("border:2px groove gray;border-radius:10px;padding:2px 4px;")
+
+        self.show()
 
 
 class Window(QtGui.QMainWindow):
@@ -48,12 +60,12 @@ class Window(QtGui.QMainWindow):
 
     def close_me(self):
         self.hot.end()
-        self.timer.start(10)
+        self.timer.start(100)
 
     def command(self):
         if not self.commandDialog.isVisible():
             self.commandDialog.show()
-            #self.commandDialog.activateWindow()
+            self.commandDialog.activateWindow()
             self.commandDialog.textEdit.setFocus()
 
 

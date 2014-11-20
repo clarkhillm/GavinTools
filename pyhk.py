@@ -64,16 +64,16 @@ class pyhk:
         self.UserHKFUp = []
         self.HKFIDDict = {}
 
-        #create Lookup for event keys and ids
-        #for keyboards
+        # create Lookup for event keys and ids
+        # for keyboards
         self.ID2Key, self.Key2ID = self.createKeyLookup()
-        #for mouse, artifical lookup first
+        # for mouse, artifical lookup first
         self.mouseDown_MID2eventMessage, self.mouseDown_eventMessage2MID, self.mouseUp_MID2eventMessage, self.mouseUp_eventMessage2MID = self.createMouseLookup()
 
-        #create list for singleEvent, ie there is only a key down, no key up
+        # create list for singleEvent, ie there is only a key down, no key up
         self.singleEventMouseMessage, self.singleEventMID = self.createSingleEventMouse()
 
-        #creat list for merged keys like Ctrl <= Lcontrol, Rcontrol
+        # creat list for merged keys like Ctrl <= Lcontrol, Rcontrol
         self.KeyID2MEID = self.createMergeKeys()
 
         # create a hook manager
@@ -143,18 +143,18 @@ class pyhk:
 
         IDHotkeyTemp = IDHotkey[:]
 
-        #check if there is a MEID and create accorind hotkeyVariationList
+        # check if there is a MEID and create accorind hotkeyVariationList
         for Key in self.KeyID2MEID:
 
             if self.KeyID2MEID[Key] in IDHotkeyTemp:
-                #merged hotkey in hotkey
-                #get MEID
+                # merged hotkey in hotkey
+                # get MEID
                 MEIDTemp = self.KeyID2MEID[Key]
-                #get all KeyIDs
+                # get all KeyIDs
                 KeyIDVariationTemp = [k for k in self.KeyID2MEID if
                                       self.KeyID2MEID[k] == MEIDTemp]
 
-                #remove MEID from IDHotekey
+                # remove MEID from IDHotekey
                 IDHotkeyTemp.remove(MEIDTemp)
 
                 #store according MEID and KeyIDList
@@ -162,7 +162,7 @@ class pyhk:
 
         if len(hotkeyVariationList) > 0:
             hotkeyVariationList.append(IDHotkeyTemp)
-            #get all possible permutations
+            # get all possible permutations
             hotkeyList = UniquePermutation(hotkeyVariationList)
         else:
             hotkeyList = [IDHotkey]
@@ -244,21 +244,21 @@ class pyhk:
         self.addHotkey(hotkey, self.end)
 
     # --------------------------------------------------------
-    #ID functions for HKFID
+    # ID functions for HKFID
     def getNewHKFID(self):
         try:
             return max(self.HKFIDDict.keys()) + 1
         except:
             return 1
 
-            #--------------------------------------------------------
+            # --------------------------------------------------------
 
     def isHotkey(self, hotkey):
         """Check if hotkey is pressed down
             Hotkey is given as KeyID"""
 
         try:
-            #make sure exact hotkey is pressed
+            # make sure exact hotkey is pressed
             if not (len(hotkey) == len(self.KeyDownID)):
                 return False
             for hotk in hotkey:
@@ -272,18 +272,18 @@ class pyhk:
     def OnKeyDown(self, event):
 
         if not "mouse" in event.MessageName:
-            #check for merged keys first
+            # check for merged keys first
             eventID = event.KeyID
         else:
             eventID = self.mouseDown_eventMessage2MID[event.Message]
 
-        #print(self.ID2Key.get(eventID))
-        #make sure key only gets presse once
+        # print(self.ID2Key.get(eventID))
+        # make sure key only gets presse once
         if not (eventID in self.KeyDownID):
 
             self.KeyDownID.append(eventID)
 
-            #Add user hotkeys and functions
+            # Add user hotkeys and functions
             for hk, fun in self.UserHKF:
                 if self.isHotkey(hk):
                     fun()
@@ -298,7 +298,7 @@ class pyhk:
         else:
             eventID = self.mouseUp_eventMessage2MID[event.Message]
 
-        #check for hotkey up keys           
+        # check for hotkey up keys
         for hk, fun in self.UserHKFUp:
             if hk[0] == eventID:
                 fun()
@@ -314,13 +314,13 @@ class pyhk:
         """Function to excetue single mouse events"""
 
         if event.Message in self.singleEventMouseMessage:
-            #test for mouse wheel:
+            # test for mouse wheel:
             if event.Message == 522:
                 if event.Wheel == 1:
                     eventID = 1004
                 else:
                     eventID = 1005
-            #test mouse move
+            # test mouse move
             elif event.Message == 512:
                 eventID = 1000
             else:
@@ -328,7 +328,7 @@ class pyhk:
 
             self.KeyDownID.append(eventID)
 
-            #Add user hotkeys and functions
+            # Add user hotkeys and functions
             for hk, fun in self.UserHKF:
                 if self.isHotkey(hk):
                     fun()
@@ -338,7 +338,7 @@ class pyhk:
         return True
 
 
-    #--------------------------------------------------------
+    # --------------------------------------------------------
 
     def createKeyLookup(self):
         """Creates Key look up dictionaries, change names as you please"""
@@ -440,13 +440,13 @@ class pyhk:
                   220: 'Oem_5',
                   221: 'Oem_6',
                   222: 'Oem_7',
-                  1001: 'mouse left',  #mouse hotkeys
+                  1001: 'mouse left',  # mouse hotkeys
                   1002: 'mouse right',
                   1003: 'mouse middle',
-                  1000: 'mouse move',  #single event hotkeys
+                  1000: 'mouse move',  # single event hotkeys
                   1004: 'mouse wheel up',
                   1005: 'mouse wheel down',
-                  1010: 'Ctrl',  #merged hotkeys
+                  1010: 'Ctrl',  # merged hotkeys
                   1011: 'Alt',
                   1012: 'Shift'}
 
@@ -508,10 +508,10 @@ class pyhk:
         """return a list of all hotkeys without single events and modifiers"""
         TempID2Key = self.ID2Key.copy()
 
-        #get rid of single events and modifiers
+        # get rid of single events and modifiers
         getRid = [160, 161, 162, 163, 164, 165, 1000, 1004, 1005, 1010, 1011, 1012]
 
-        #get rid of Lwin and oems
+        # get rid of Lwin and oems
         moreRid = [91, 186, 187, 188, 189, 190, 191, 192, 219, 220, 221, 222]
 
         for item in moreRid:
@@ -576,7 +576,7 @@ class ExecFunThread:
 if __name__ == '__main__':
     import win32gui
 
-    #define test function 
+    # define test function
     def funk1():
         print "Hotkey pressed: Lcontrol 7"
 
@@ -589,12 +589,12 @@ if __name__ == '__main__':
     def funWin():
         print win32gui.GetForegroundWindow()
 
-    #create pyhk class instance    
+    # create pyhk class instance
     hot = pyhk()
 
     print hot.getHotkeyListNoSingleNoModifiers()
 
-    #add hotkey
+    # add hotkey
     id1 = hot.addHotkey(['Ctrl', 'Alt', '7'], funk1)
     id2 = hot.addHotkey(['Ctrl', 'Alt', '7'], funk1)
     id3 = hot.addHotkey(['Ctrl', 'Alt', '7'], funk1)
@@ -602,10 +602,10 @@ if __name__ == '__main__':
     id4 = hot.addHotkey(['7'], funWin, isThread=True, up=True)
     id4 = hot.addHotkey(['7'], funWin, isThread=True, up=True)
 
-    #add hotkey
+    # add hotkey
     hot.addHotkey(['mouse middle', '1'], funM)
 
-    #add hotkey
+    # add hotkey
     hot.addHotkey(["mouse wheel up"], funW)
 
     #start looking for hotkey. Loop is ended with CTRL Shift Q

@@ -56,7 +56,7 @@ class Window(QtGui.QMainWindow):
         self.hot = pyhk.pyhk()
         # add hotkey
         self.hot.addHotkey(['Ctrl', 'Alt', 'Q'], self.close_me)
-        self.hot.addHotkey(['Alt', 'Shift', '1'], self.command)
+        self.hot.addHotkey(['Alt', 'Shift', 'C'], self.command)
         # start looking for hotkey.
         self.hot.start()
 
@@ -73,13 +73,6 @@ class Window(QtGui.QMainWindow):
 
 
 if __name__ == '__main__':
-
     app = QtGui.QApplication(sys.argv)
-
-    if not QtGui.QSystemTrayIcon.isSystemTrayAvailable():
-        QtGui.QMessageBox.critical(None, 'Systray',
-                                   'I couldn\'t detect any system tray on this system.')
-        sys.exit(1)
-
     window = Window()
     sys.exit(app.exec_())

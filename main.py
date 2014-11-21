@@ -4,7 +4,7 @@ import sys
 sip.setapi('QVariant', 2)
 sip.setapi('QString', 2)
 
-from PyQt4.QtCore import Qt, QTimer, SIGNAL
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import QBitmap, QPainter
 from PyQt4 import QtGui, QtCore
 
@@ -12,13 +12,18 @@ import pyhk
 
 
 class State:
+    currentHotKey = ''
+    currentCommand = None
+
     def __init__(self):
-        self.currentHotKey = ''
+        pass
 
 
 class CommandDialog(QtGui.QDialog):
     def __init__(self):
         super(CommandDialog, self).__init__()
+
+        self.setFocusPolicy(Qt.TabFocus)
 
         self.mask = None
         self.p = None
@@ -48,8 +53,6 @@ class CommandDialog(QtGui.QDialog):
         self.setLayout(layout)
 
     def text_change(self, value):
-        print State.currentHotKey
-        print value
         if State.currentHotKey == 'command' and value == 'C':
             self.textEdit.setEditText(value.rstrip('C'))
 
@@ -64,6 +67,16 @@ class CommandDialog(QtGui.QDialog):
 
     def resizeEvent(self, event):
         self.mask_round_corner()
+
+    def keyPressEvent(self, event):
+        if event.key() == 16777220 or event.key == 16777221:
+            command = self.textEdit.currentText()
+            self.textEdit.setEditText('')
+
+            if command == 'proxy':
+                from commands import proxy
+
+                proxy.execute()
 
 
 class Window(QtGui.QMainWindow):

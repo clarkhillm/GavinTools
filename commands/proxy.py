@@ -1,14 +1,26 @@
-from PyQt4.QtCore import QThread
+import logging
 
-__author__ = 'cwx205128'
+from PyQt4 import QtCore
+
+from PyQt4.QtCore import QThread
 
 from doProxy import proxy
 
+test = QThread()
 
-class ProxyServer(QThread):
-    def run(self):
-        proxy.main()
+
+def work():
+    proxy.main(test)
+
+
+def update(info):
+    logging.info('message: %s', info)
+
+
+test.run = work
+test.connect(test, QtCore.SIGNAL('update(QString)'), update)
 
 
 def execute():
-    ProxyServer().start()
+    logging.info('start thread..')
+    test.start()

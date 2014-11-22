@@ -1,6 +1,9 @@
 import sip
 import sys
 
+import pyhk
+
+
 sip.setapi('QVariant', 2)
 sip.setapi('QString', 2)
 
@@ -8,7 +11,9 @@ from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import QBitmap, QPainter
 from PyQt4 import QtGui, QtCore
 
-import pyhk
+import logging
+
+logging.basicConfig(format='%(asctime)s -- %(message)s', level=logging.DEBUG)
 
 
 class State:
@@ -69,8 +74,11 @@ class CommandDialog(QtGui.QDialog):
         self.mask_round_corner()
 
     def keyPressEvent(self, event):
-        if event.key() == 16777220 or event.key == 16777221:
+        logging.debug('Q key id %s ', event.key())
+        if event.key() == 16777220 or event.key() == 16777221:
             command = self.textEdit.currentText()
+            logging.info('command %s', command)
+
             self.textEdit.setEditText('')
 
             if command == 'proxy':
@@ -89,16 +97,9 @@ class Window(QtGui.QMainWindow):
         self.trayIconMenu = QtGui.QMenu(self)
 
         self.trayIcon.setContextMenu(self.trayIconMenu)
-        self.trayIcon.setIcon(QtGui.QIcon('images/systray.png'))
+        self.trayIcon.setIcon(QtGui.QIcon('images/heart.png'))
 
         self.trayIcon.show()
-
-        self.hot = pyhk.pyhk()
-        # add hotkey
-        self.hot.addHotkey(['Ctrl', 'Alt', 'Q'], self.close_me)
-        self.hot.addHotkey(['Ctrl', 'Alt', 'C'], self.command)
-        # start looking for hotkey.
-        self.hot.start()
 
     @staticmethod
     def close_me():
@@ -115,7 +116,16 @@ class Window(QtGui.QMainWindow):
             self.commandDialog.textEdit.setEditable(True)
 
 
+hot = pyhk.pyhk()
+
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     window = Window()
-    sys.exit(app.exec_())
+
+    # add hotkey
+    hot.addHotkey(['Ctrl', 'Alt', 'Q'], window.close_me)
+    hot.addHotkey(['Ctrl', 'Alt', 'C'], window.command)
+    # start looking for hotkey.
+    hot.start()
+
+sys.exit(app.exec_())

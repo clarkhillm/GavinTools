@@ -4,14 +4,14 @@
 # Based on WallProxy 0.4.0 by Hust Moon <www.ehust@gmail.com>
 # Contributor:
 # Phus Lu           <phus.lu@gmail.com>
-#      Hewig Xu          <hewigovens@gmail.com>
-#      Ayanamist Yang    <ayanamist@gmail.com>
-#      V.E.O             <V.E.O@tom.com>
-#      Max Lv            <max.c.lv@gmail.com>
-#      AlsoTang          <alsotang@gmail.com>
-#      Christopher Meng  <i@cicku.me>
-#      Yonsm Guo         <YonsmGuo@gmail.com>
-#      Parkman           <cseparkman@gmail.com>
+# Hewig Xu          <hewigovens@gmail.com>
+# Ayanamist Yang    <ayanamist@gmail.com>
+# V.E.O             <V.E.O@tom.com>
+# Max Lv            <max.c.lv@gmail.com>
+# AlsoTang          <alsotang@gmail.com>
+# Christopher Meng  <i@cicku.me>
+# Yonsm Guo         <YonsmGuo@gmail.com>
+# Parkman           <cseparkman@gmail.com>
 #      Ming Bai          <mbbill@gmail.com>
 #      Bin Yu            <yubinlove1991@gmail.com>
 #      lileixuan         <lileixuan@gmail.com>
@@ -44,6 +44,7 @@
 #      zwhfly            <zwhfly@163.com>
 #      Hubertzhang       <hubert.zyk@gmail.com>
 #      arrix             <arrixzhou@gmail.com>
+from PyQt4 import QtCore
 
 __version__ = '3.2.0'
 
@@ -85,6 +86,8 @@ import gevent
 import OpenSSL
 
 NetWorkIOError = (socket.error, ssl.SSLError, OpenSSL.SSL.Error, OSError)
+
+luntcher = None
 
 
 class Logging(type(sys)):
@@ -129,7 +132,9 @@ class Logging(type(sys)):
             self.debug = self.dummy
 
     def log(self, level, fmt, *args, **kwargs):
-        sys.stderr.write('%s - [%s] %s\n' % (level, time.ctime()[4:-5], fmt % args))
+        # sys.stderr.write('%s - [%s] %s\n' % (level, time.ctime()[4:-5], fmt % args))
+
+        luntcher.emit(QtCore.SIGNAL('update(QString)'), str(args))
 
     def dummy(self, *args, **kwargs):
         pass
@@ -157,7 +162,8 @@ class Logging(type(sys)):
 
     def exception(self, fmt, *args, **kwargs):
         self.error(fmt, *args, **kwargs)
-        sys.stderr.write(traceback.format_exc() + '\n')
+        # sys.stderr.write(traceback.format_exc() + '\n')
+        luntcher.emit(QtCore.SIGNAL('update(QString)'), traceback.format_exc())
 
     def critical(self, fmt, *args, **kwargs):
         self.__set_error_color()
@@ -207,11 +213,12 @@ from proxylib import XORCipher
 
 def is_google_ip(ipaddr):
     if ipaddr in (
-    '74.125.127.102', '74.125.155.102', '74.125.39.102', '74.125.39.113', '209.85.229.138'):
+            '74.125.127.102', '74.125.155.102', '74.125.39.102', '74.125.39.113', '209.85.229.138'):
         return False
     if ipaddr.startswith((
-    '173.194.', '207.126.', '209.85.', '216.239.', '64.18.', '64.233.', '66.102.', '66.249.',
-    '72.14.', '74.125.')):
+            '173.194.', '207.126.', '209.85.', '216.239.', '64.18.', '64.233.', '66.102.',
+            '66.249.',
+            '72.14.', '74.125.')):
         return True
     return False
 
@@ -531,7 +538,7 @@ class GAEFetchPlugin(BaseFetchPlugin):
         request_method = 'POST'
         fetchserver_index = random.randint(0, len(self.appids) - 1) if 'Range' in headers else 0
         fetchserver = kwargs.get('fetchserver') or '%s://%s.appspot.com%s' % (
-        self.mode, self.appids[fetchserver_index], self.path)
+            self.mode, self.appids[fetchserver_index], self.path)
         request_headers = {}
         if common.GAE_OBFUSCATE:
             request_method = 'GET'
@@ -554,7 +561,7 @@ class GAEFetchPlugin(BaseFetchPlugin):
         need_crlf = 0 if common.GAE_MODE == 'https' else 1
         need_validate = common.GAE_VALIDATE
         cache_key = '%s:%d' % (
-        common.HOST_POSTFIX_MAP['.appspot.com'], 443 if common.GAE_MODE == 'https' else 80)
+            common.HOST_POSTFIX_MAP['.appspot.com'], 443 if common.GAE_MODE == 'https' else 80)
         headfirst = bool(common.GAE_HEADFIRST)
         response = handler.create_http_request(request_method, fetchserver, request_headers, body,
                                                timeout, crlf=need_crlf, validate=need_validate,
@@ -899,7 +906,7 @@ class PacUtil(object):
         autoproxy = '%s:%s' % (listen_ip, common.LISTEN_PORT)
         blackhole = '%s:%s' % (listen_ip, common.PAC_PORT)
         default = 'PROXY %s:%s' % (
-        common.PROXY_HOST, common.PROXY_PORT) if common.PROXY_ENABLE else 'DIRECT'
+            common.PROXY_HOST, common.PROXY_PORT) if common.PROXY_ENABLE else 'DIRECT'
         opener = urllib2.build_opener(urllib2.ProxyHandler({'http': autoproxy, 'https': autoproxy}))
         content = ''
         need_update = True
@@ -932,7 +939,7 @@ class PacUtil(object):
                                                                      None) and hasattr(
                         gevent.get_hub(), 'threadpool'):
                     jsrule = gevent.get_hub().threadpool.apply_e(Exception, PacUtil.adblock2pac, (
-                    adblock_content, 'FindProxyForURLByAdblock', blackhole, default, admode))
+                        adblock_content, 'FindProxyForURLByAdblock', blackhole, default, admode))
                 else:
                     jsrule = PacUtil.adblock2pac(adblock_content, 'FindProxyForURLByAdblock',
                                                  blackhole, default, admode)
@@ -1001,12 +1008,12 @@ class PacUtil(object):
                         -1] or 'host.indexOf("%s") >= 0' % domain in jsLines[-1]):
                         jsLines.pop()
                     jsLine = 'if (dnsDomainIs(host, ".%s") || host == "%s") return "%s";' % (
-                    domain, domain, return_proxy)
+                        domain, domain, return_proxy)
                 elif line.startswith('|'):
                     jsLine = 'if (url.indexOf("%s") == 0) return "%s";' % (line[1:], return_proxy)
                 elif '*' in line:
                     jsLine = 'if (shExpMatch(url, "*%s*")) return "%s";' % (
-                    line.strip('*'), return_proxy)
+                        line.strip('*'), return_proxy)
                 elif '/' not in line:
                     jsLine = 'if (host.indexOf("%s") >= 0) return "%s";' % (line, return_proxy)
                 else:
@@ -1017,7 +1024,7 @@ class PacUtil(object):
                 else:
                     jsLines.insert(0, jsLine)
         function = 'function %s(url, host) {\r\n%s\r\n%sreturn "%s";\r\n}' % (
-        func_name, '\n'.join(jsLines), ' ' * indent, default)
+            func_name, '\n'.join(jsLines), ' ' * indent, default)
         return function
 
     @staticmethod
@@ -1107,7 +1114,7 @@ class PacUtil(object):
                 else:
                     jsLines.insert(0, jsLine)
         function = 'function %s(url, host) {\r\n%s\r\n%sreturn "%s";\r\n}' % (
-        func_name, '\n'.join(jsLines), ' ' * indent, default)
+            func_name, '\n'.join(jsLines), ' ' * indent, default)
         return function
 
     @staticmethod
@@ -1288,7 +1295,7 @@ class PacFileFilter(BaseProxyHandlerFilter):
                 uptime = get_uptime()
                 if uptime and uptime > 1800:
                     thread.start_new_thread(lambda: os.utime(pacfile, (
-                    time.time(), time.time())) or PacUtil.update_pacfile(pacfile), tuple())
+                        time.time(), time.time())) or PacUtil.update_pacfile(pacfile), tuple())
             with open(pacfile, 'rb') as fp:
                 content = fp.read()
                 if not is_local_client:
@@ -1610,7 +1617,7 @@ class Common(object):
                 for delay in (30, 60, 150, 240, 300, 450, 600, 900):
                     spawn_later(delay, self.extend_iplist, name, need_resolve_remote)
             if name.startswith('google_') and name not in (
-            'google_cn', 'google_hk') and resolved_iplist:
+                    'google_cn', 'google_hk') and resolved_iplist:
                 iplist_prefix = re.split(r'[\.:]', resolved_iplist[0])[0]
                 resolved_iplist = list(
                     set(x for x in resolved_iplist if x.startswith(iplist_prefix)))
@@ -1621,7 +1628,7 @@ class Common(object):
                 resolved_iplist = [x for x in resolved_iplist if
                                    not x.startswith(google_blacklist_prefix)]
             if len(resolved_iplist) == 0 and name in (
-            'google_hk', 'google_cn') and not self.GAE_IPV6:
+                    'google_hk', 'google_cn') and not self.GAE_IPV6:
                 logging.error('resolve %s host return empty! please retry!', name)
                 sys.exit(-1)
             logging.info('resolve name=%s host to iplist=%r', name, resolved_iplist)
@@ -1642,14 +1649,14 @@ class Common(object):
         info = ''
         info += '------------------------------------------------------\n'
         info += 'GoAgent Version    : %s (python/%s gevent/%s pyopenssl/%s)\n' % (
-        __version__, sys.version[:5], gevent.__version__, OpenSSL.__version__)
+            __version__, sys.version[:5], gevent.__version__, OpenSSL.__version__)
         info += 'Uvent Version      : %s (pyuv/%s libuv/%s)\n' % (
-        __import__('uvent').__version__, __import__('pyuv').__version__,
-        __import__('pyuv').LIBUV_VERSION) if all(
+            __import__('uvent').__version__, __import__('pyuv').__version__,
+            __import__('pyuv').LIBUV_VERSION) if all(
             x in sys.modules for x in ('pyuv', 'uvent')) else ''
         info += 'Listen Address     : %s:%d\n' % (self.LISTEN_IP, self.LISTEN_PORT)
         info += 'Local Proxy        : %s:%s\n' % (
-        self.PROXY_HOST, self.PROXY_PORT) if self.PROXY_ENABLE else ''
+            self.PROXY_HOST, self.PROXY_PORT) if self.PROXY_ENABLE else ''
         info += 'Debug INFO         : %s\n' % self.LISTEN_DEBUGINFO if self.LISTEN_DEBUGINFO else ''
         info += 'GAE Mode           : %s\n' % self.GAE_MODE
         info += 'GAE IPv6           : %s\n' % self.GAE_IPV6 if self.GAE_IPV6 else ''
@@ -1658,8 +1665,8 @@ class Common(object):
         info += 'GAE Obfuscate      : %s\n' % self.GAE_OBFUSCATE if self.GAE_OBFUSCATE else ''
         if common.PAC_ENABLE:
             info += 'Pac Server         : http://%s:%d/%s\n' % (
-            self.PAC_IP if self.PAC_IP and self.PAC_IP != '0.0.0.0' else ProxyUtil.get_listen_ip(),
-            self.PAC_PORT, self.PAC_FILE)
+                self.PAC_IP if self.PAC_IP and self.PAC_IP != '0.0.0.0' else ProxyUtil.get_listen_ip(),
+                self.PAC_PORT, self.PAC_FILE)
             info += 'Pac File           : file://%s\n' % os.path.abspath(self.PAC_FILE)
         if common.PHP_ENABLE:
             info += 'PHP Listen         : %s\n' % common.PHP_LISTEN
@@ -1747,7 +1754,7 @@ def pre_start():
         GAEProxyHandler.disable_transport_ssl = False
     if common.PAC_ENABLE:
         pac_ip = ProxyUtil.get_listen_ip() if common.PAC_IP in (
-        '', '::', '0.0.0.0') else common.PAC_IP
+            '', '::', '0.0.0.0') else common.PAC_IP
         url = 'http://%s:%d/%s' % (pac_ip, common.PAC_PORT, common.PAC_FILE)
         spawn_later(600, urllib2.build_opener(urllib2.ProxyHandler({})).open, url)
     if not common.DNS_ENABLE:
@@ -1803,7 +1810,9 @@ def pre_start():
                                                              common.LISTEN_PASSWORD))
 
 
-def main():
+def main(luncther1):
+    global luntcher
+    luntcher = luncther1
     global __file__
     __file__ = os.path.abspath(__file__)
     if os.path.islink(__file__):

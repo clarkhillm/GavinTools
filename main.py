@@ -1,14 +1,12 @@
 import sip
 import sys
 
-import pyhk
-
 
 sip.setapi('QVariant', 2)
 sip.setapi('QString', 2)
 
-from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QBitmap, QPainter
+from PyQt4.QtCore import Qt, SIGNAL, QThread
+from PyQt4.QtGui import QBitmap, QPainter, QAction
 from PyQt4 import QtGui, QtCore
 
 import logging
@@ -51,7 +49,8 @@ class CommandDialog(QtGui.QDialog):
              }
              """)
         self.textEdit.setAutoCompletion(True)
-        self.connect(self.textEdit, SIGNAL('editTextChanged(QString)'), self.text_change)
+        self.connect(self.textEdit, SIGNAL('editTextChanged(QString)'),
+                     self.text_change)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.textEdit)
@@ -67,7 +66,8 @@ class CommandDialog(QtGui.QDialog):
         self.p = QPainter(self.mask)
         self.p.fillRect(self.rect(), Qt.white)
         self.p.setBrush(Qt.black)
-        self.p.drawRoundedRect(0, 0, self.width() - 1, self.height() - 1, 20, 20)
+        self.p.drawRoundedRect(0, 0, self.width() - 1,
+                               self.height() - 1, 20, 20)
         self.setMask(self.mask)
 
     def resizeEvent(self, event):
@@ -93,17 +93,43 @@ class Window(QtGui.QMainWindow):
 
         self.commandDialog = CommandDialog()
 
-        self.trayIcon = QtGui.QSystemTrayIcon(self)
+        self.exitAction = self.create_action('Q', self.close_me)
+        self.testAction = self.create_action('T', self.test)
+        self.test_launcher = QThread()
+
         self.trayIconMenu = QtGui.QMenu(self)
+
+        self.trayIconMenu.addAction(self.exitAction)
+        self.trayIconMenu.addAction(self.testAction)
+
+        self.trayIcon = QtGui.QSystemTrayIcon(self)
+
+        self.trayIcon.activated.connect(self.on_activated)
 
         self.trayIcon.setContextMenu(self.trayIconMenu)
         self.trayIcon.setIcon(QtGui.QIcon('images/heart.png'))
 
         self.trayIcon.show()
 
-    @staticmethod
-    def close_me():
-        sys.exit(1)
+    def close_me(self):
+        print 'close test_launcher..'
+        self.test_launcher.emit(QtCore.SIGNAL('unhook(int)'), 0)
+        print 'close application..'
+        self.close()
+
+    def create_action(self, name, handler):
+        _v = QAction(name, self)
+        _v.triggered.connect(handler)
+        return _v
+
+    def on_activated(self):
+        print 'click..'
+
+    def test(self):
+        import keyManager as keyM
+
+        self.test_launcher.run = keyM.monitor(self.test_launcher)
+        self.test_launcher.start()
 
     def command(self):
         State.currentHotKey = 'command'
@@ -116,16 +142,7 @@ class Window(QtGui.QMainWindow):
             self.commandDialog.textEdit.setEditable(True)
 
 
-hot = pyhk.pyhk()
-
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
     window = Window()
-
-    # add hotkey
-    hot.addHotkey(['Ctrl', 'Alt', 'Q'], window.close_me)
-    hot.addHotkey(['Ctrl', 'Alt', 'C'], window.command)
-    # start looking for hotkey.
-    hot.start()
-
-sys.exit(app.exec_())
+    sys.exit(app.exec_())

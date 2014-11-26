@@ -8,6 +8,7 @@ sip.setapi('QString', 2)
 from PyQt4.QtCore import Qt, SIGNAL, QThread
 from PyQt4.QtGui import QBitmap, QPainter, QAction
 from PyQt4 import QtGui, QtCore
+import keyManager as keyM
 
 import logging
 
@@ -75,6 +76,10 @@ class CommandDialog(QtGui.QDialog):
 
     def keyPressEvent(self, event):
         logging.debug('Q key id %s ', event.key())
+
+        if event.key() == 16777216:
+            self.hide()
+
         if event.key() == 16777220 or event.key() == 16777221:
             command = self.textEdit.currentText()
             logging.info('command %s', command)
@@ -94,47 +99,49 @@ class Window(QtGui.QMainWindow):
         self.commandDialog = CommandDialog()
 
         self.exitAction = self.create_action('Q', self.close_me)
-        self.testAction = self.create_action('T', self.test)
+
         self.test_launcher = QThread()
+        self.test_launcher.run = keyM.monitor
+        keyM.launcher = self.test_launcher
+        keyM.launcher.connect(keyM.launcher, QtCore.SIGNAL('unhook(int)'),
+                              keyM.unhook)
+        keyM.launcher.connect(keyM.launcher, QtCore.SIGNAL('keyPress(QString)'),
+                              self.key_press)
+        self.test_launcher.start()
 
         self.trayIconMenu = QtGui.QMenu(self)
 
         self.trayIconMenu.addAction(self.exitAction)
-        self.trayIconMenu.addAction(self.testAction)
 
         self.trayIcon = QtGui.QSystemTrayIcon(self)
-
-        self.trayIcon.activated.connect(self.on_activated)
 
         self.trayIcon.setContextMenu(self.trayIconMenu)
         self.trayIcon.setIcon(QtGui.QIcon('images/heart.png'))
 
+        self.trayIcon.activated.connect(self.on_activated)
+
         self.trayIcon.show()
+
+    def key_press(self, value):
+        print value
 
     def close_me(self):
         print 'close test_launcher..'
         self.test_launcher.emit(QtCore.SIGNAL('unhook(int)'), 0)
         print 'close application..'
+
+        self.commandDialog.close()
         self.close()
+        # ctypes.windll.user32.PostQuitMessage(0)
 
     def create_action(self, name, handler):
         _v = QAction(name, self)
         _v.triggered.connect(handler)
         return _v
 
-    def on_activated(self):
-        print 'click..'
-
-    def test(self):
-        import keyManager as keyM
-
-        self.test_launcher.run = keyM.monitor(self.test_launcher)
-        self.test_launcher.start()
-
-    def command(self):
-        State.currentHotKey = 'command'
-
-        if not self.commandDialog.isVisible():
+    def on_activated(self, e):
+        print type(e), e
+        if e == 3:
             self.commandDialog.show()
             self.commandDialog.activateWindow()
             self.commandDialog.textEdit.setFocus()

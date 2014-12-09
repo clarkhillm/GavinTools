@@ -18,9 +18,7 @@ logging.basicConfig(format='%(asctime)s -- %(message)s', level=logging.DEBUG)
 class State:
     currentHotKey = ''
     currentCommand = None
-
-    def __init__(self):
-        pass
+    trayIconDisplayed=False
 
 
 class CommandDialog(QtGui.QDialog):
@@ -81,7 +79,7 @@ class CommandDialog(QtGui.QDialog):
             self.hide()
 
         if event.key() == 16777220 or event.key() == 16777221:
-            command = self.textEdit.currentText()
+            commnd = self.textEdit.currentText()
             logging.info('command %s', command)
 
             self.textEdit.setEditText('')
@@ -110,17 +108,15 @@ class Window(QtGui.QMainWindow):
         self.test_launcher.start()
 
         self.trayIconMenu = QtGui.QMenu(self)
-
         self.trayIconMenu.addAction(self.exitAction)
 
         self.trayIcon = QtGui.QSystemTrayIcon(self)
-
         self.trayIcon.setContextMenu(self.trayIconMenu)
         self.trayIcon.setIcon(QtGui.QIcon('images/heart.png'))
-
         self.trayIcon.activated.connect(self.on_activated)
-
         self.trayIcon.show()
+
+        State.trayIconDisplayed=True
 
     def key_press(self, value):
         print value
